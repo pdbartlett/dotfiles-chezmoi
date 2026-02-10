@@ -7,7 +7,6 @@ Host *
 
 # Home network
 {{ range .nodes }}
-{{- if .is_server }}
 # --- {{ .name | upper }} ---
 Host {{ .name }}
     HostName {{ .name }}.home
@@ -19,5 +18,4 @@ Host {{ .name }}-raw
     HostName {{ .name }}.home
     User {{ .user }}
 
-{{ end -}}
 {{ end -}}

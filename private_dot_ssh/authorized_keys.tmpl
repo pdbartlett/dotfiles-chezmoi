@@ -1,10 +1,8 @@
 {{- $currentHost := .chezmoi.hostname | trimSuffix ".home" -}}
+{{- $pubkey := index . "master_pubkey" -}}
 
 {{- range .nodes -}}
-  {{- /* We check if the key "name" exists before comparing it */ -}}
-  {{- if hasKey . "name" -}}
-    {{- if and (eq .name $currentHost) .is_server -}}
-      {{ $.master_pubkey }}
-    {{- end -}}
+  {{- if eq .name $currentHost -}}
+    {{- $pubkey -}}
   {{- end -}}
 {{- end -}}
