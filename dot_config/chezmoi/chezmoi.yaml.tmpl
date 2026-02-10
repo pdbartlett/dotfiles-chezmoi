@@ -1,0 +1,14 @@
+encryption: "age"
+age:
+    identity: "~/.config/chezmoi/key.txt"
+    symmetric: true
+data:
+  nodes:
+    - name: "argonpi"
+      user: "pdb"
+      is_server: true
+    - name: "macmini"
+      user: "pdbartlett"
+      is_server: true
+    - addr: "pdbartlett-mac.roam.internal"
+      is_server: false

@@ -1,0 +1,23 @@
+# Universal Settings
+Host *
+    IdentityFile ~/.ssh/id_ed25519
+    # Keep the connection alive
+    ServerAliveInterval 60
+    ServerAliveCountMax 3
+
+# Home network
+{{ range .nodes }}
+{{- if .is_server }}
+# --- {{ .name | upper }} ---
+Host {{ .name }}
+    HostName {{ .name }}.home
+    User {{ .user }}
+    RequestTTY yes
+    RemoteCommand tmux new-session -A -s ssh
+
+Host {{ .name }}-raw
+    HostName {{ .name }}.home
+    User {{ .user }}
+
+{{ end -}}
+{{ end -}}
