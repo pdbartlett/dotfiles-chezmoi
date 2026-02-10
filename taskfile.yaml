@@ -2,25 +2,33 @@ version: '3'
 
 tasks:
   provision:
-    desc: "Seed a new node using the -raw SSH alias"
+    desc: "Bootstrap a new node: install chezmoi, seed keys, and init"
     cmds:
-      # 1. Check if NODE was provided
       - |
         if [ -z "{{.NODE}}" ]; then
-          echo "❌ Error: You must specify a node. Usage: task provision NODE=macmini";
-          exit 1;
+          echo "❌ Error: Specify a node. Example: task provision NODE=macmini"
+          exit 1
         fi
-      
-      # 2. Check for local key
-      - test -f ~/.config/chezmoi/key.txt || (echo "❌ Error: key.txt not found locally!"; exit 1)
 
-      - echo "Creating remote config directory on {{.NODE}}..."
-      - ssh {{.NODE}}-raw "mkdir -p ~/.config/chezmoi"
+        RAW_HOST="{{.NODE}}-raw"
+        
+        echo "Step 1: 🔑 Authorizing MBP key on ${RAW_HOST}..."
+        ssh-copy-id -i ~/.ssh/id_ed25519.pub "${RAW_HOST}"
 
-      - echo "Transferring key and config to {{.NODE}}..."
-      - scp ~/.config/chezmoi/key.txt ~/.config/chezmoi/chezmoi.yaml {{.NODE}}-raw:~/.config/chezmoi/
+        echo "Step 2: 🛠 Installing chezmoi..."
+        # We use a path that doesn't rely on remote variable expansion for the install
+        ssh "${RAW_HOST}" "mkdir -p .local/bin && curl -fsLS get.chezmoi.io | sh -s -- -b .local/bin"
 
-      - echo "🚀 Initializing chezmoi on {{.NODE}}..."
-      - ssh {{.NODE}}-raw "chezmoi init --apply https://github.com/pdbartlett/dotfiles-chezmoi.git"
-
-      - echo "✅ {{.NODE}} is now fully provisioned."
+        echo "Step 3: 📁 Creating remote config directory..."
+        ssh "${RAW_HOST}" "mkdir -p .config/chezmoi"
+        
+        echo "Step 4: 🛰 Transferring key and config..."
+        # We strip the leading $HOME/ and trailing slash. 
+        # scp looks relative to the home dir by default.
+        scp ~/.config/chezmoi/key.txt ~/.config/chezmoi/chezmoi.yaml "${RAW_HOST}:.config/chezmoi/"
+        
+        echo "Step 5: 🚀 Initializing chezmoi..."
+        # We use the dot-path which is universally understood by all shells
+        ssh "${RAW_HOST}" "./.local/bin/chezmoi init --apply https://github.com/pdbartlett/dotfiles-chezmoi.git"
+        
+        echo "✅ {{.NODE}} is fully provisioned!"

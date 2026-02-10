@@ -4,7 +4,7 @@
   {{- /* We check if the key "name" exists before comparing it */ -}}
   {{- if hasKey . "name" -}}
     {{- if and (eq .name $currentHost) .is_server -}}
-      {{- include (joinPath $.chezmoi.homeDir ".ssh/id_ed25519.pub") -}}
+      {{ .master_pubkey }}
     {{- end -}}
   {{- end -}}
 {{- end -}}
