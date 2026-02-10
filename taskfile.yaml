@@ -1,0 +1,26 @@
+version: '3'
+
+tasks:
+  provision:
+    desc: "Seed a new node using the -raw SSH alias"
+    cmds:
+      # 1. Check if NODE was provided
+      - |
+        if [ -z "{{.NODE}}" ]; then
+          echo "❌ Error: You must specify a node. Usage: task provision NODE=macmini";
+          exit 1;
+        fi
+      
+      # 2. Check for local key
+      - test -f ~/.config/chezmoi/key.txt || (echo "❌ Error: key.txt not found locally!"; exit 1)
+
+      - echo "Creating remote config directory on {{.NODE}}..."
+      - ssh {{.NODE}}-raw "mkdir -p ~/.config/chezmoi"
+
+      - echo "Transferring key and config to {{.NODE}}..."
+      - scp ~/.config/chezmoi/key.txt ~/.config/chezmoi/chezmoi.yaml {{.NODE}}-raw:~/.config/chezmoi/
+
+      - echo "🚀 Initializing chezmoi on {{.NODE}}..."
+      - ssh {{.NODE}}-raw "chezmoi init --apply https://github.com/pdbartlett/dotfiles-chezmoi.git"
+
+      - echo "✅ {{.NODE}} is now fully provisioned."
