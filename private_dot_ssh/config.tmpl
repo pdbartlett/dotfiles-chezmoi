@@ -12,7 +12,7 @@ Host {{ .name }}
     HostName {{ .name }}.home
     User {{ .user }}
     RequestTTY yes
-    RemoteCommand tmux new-session -A -s ssh
+    RemoteCommand PATH=$PATH:/opt/homebrew/bin:/usr/local/bin tmux new-session -A -s main
 
 Host {{ .name }}-raw
     HostName {{ .name }}.home
