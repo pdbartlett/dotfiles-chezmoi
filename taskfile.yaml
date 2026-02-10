@@ -2,7 +2,7 @@ version: '3'
 
 tasks:
   provision:
-    desc: "Bootstrap a new node: install chezmoi, seed keys, and init"
+    desc: "Bootstrap a new node: Seed key and let chezmoi build the rest"
     cmds:
       - |
         if [ -z "{{.NODE}}" ]; then
@@ -11,24 +11,21 @@ tasks:
         fi
 
         RAW_HOST="{{.NODE}}-raw"
+        CONF_DIR=".config/chezmoi"
         
-        echo "Step 1: 🔑 Authorizing MBP key on ${RAW_HOST}..."
+        echo "Step 1: 🔑 Authorizing MBP key..."
         ssh-copy-id -i ~/.ssh/id_ed25519.pub "${RAW_HOST}"
 
         echo "Step 2: 🛠 Installing chezmoi..."
-        # We use a path that doesn't rely on remote variable expansion for the install
-        ssh "${RAW_HOST}" "mkdir -p .local/bin && curl -fsLS get.chezmoi.io | sh -s -- -b .local/bin"
+        ssh "${RAW_HOST}" "mkdir -p .local/bin && curl -fsLS get.chezmoi.io/lb | sh"
 
-        echo "Step 3: 📁 Creating remote config directory..."
-        ssh "${RAW_HOST}" "mkdir -p .config/chezmoi"
+        echo "Step 3: 📁 Creating config directory..."
+        ssh "${RAW_HOST}" "mkdir -p ${CONF_DIR}"
         
-        echo "Step 4: 🛰 Transferring key and config..."
-        # We strip the leading $HOME/ and trailing slash. 
-        # scp looks relative to the home dir by default.
-        scp ~/.config/chezmoi/key.txt ~/.config/chezmoi/chezmoi.yaml "${RAW_HOST}:.config/chezmoi/"
+        echo "Step 4: 🛰 Transferring ONLY the master key..."
+        scp ~/.config/chezmoi/key.txt "${RAW_HOST}:${CONF_DIR}/"
         
-        echo "Step 5: 🚀 Initializing chezmoi..."
-        # We use the dot-path which is universally understood by all shells
-        ssh "${RAW_HOST}" "./.local/bin/chezmoi init --apply https://github.com/pdbartlett/dotfiles-chezmoi.git"
+        echo "Step 5: 🚀 Initializing (Automated/No-TTY mode)..."
+        ssh "{{.NODE}}-raw" "./.local/bin/chezmoi init --apply --force --no-tty https://github.com/pdbartlett/dotfiles-chezmoi.git"
         
         echo "✅ {{.NODE}} is fully provisioned!"
