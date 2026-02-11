@@ -29,7 +29,7 @@ tasks:
         scp ~/.config/chezmoi/key.txt "${RAW_HOST}:${CONF_DIR}/"
         
         echo "Step 5: 🚀 Initializing (Automated/No-TTY mode)..."
-        ssh '{{ "{{" }}.NODE{{ "}}" }}-raw' "./.local/bin/chezmoi init --apply --force --no-tty https://github.com/pdbartlett/dotfiles-chezmoi.git"
+        ssh '{{ "{{" }}.NODE{{ "}}" }}-raw' "./.local/bin/chezmoi init --apply --force --no-tty git@github.com:pdbartlett/dotfiles.git"
         
         echo '✅ {{ "{{" }}.NODE{{ "}}" }} is fully provisioned!'
 

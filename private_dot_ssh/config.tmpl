@@ -18,4 +18,10 @@ Host {{ .name }}-raw
     HostName {{ .name }}.home
     User {{ .user }}
 
-{{ end -}}
+{{- end }}
+
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519  # Ensure this path matches your actual key
+  IdentitiesOnly yes              # Prevents SSH from trying every key in the agent
