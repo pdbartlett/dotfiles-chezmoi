@@ -1,0 +1,55 @@
+# ~/.zshrc
+# Interactive shell configuration for Zsh.
+# Sourced by interactive Zsh shells.
+
+# --- Source common interactive settings ---
+if test -f "$HOME/.shell_interactives"; then
+    . "$HOME/.shell_interactives"
+fi
+
+# --- Zsh-specific Prompt (PROMPT) ---
+# Modern and informative PROMPT
+# %n: username
+# %m: hostname up to first '.'
+# %~: current working directory, with $HOME abbreviated with a tilde
+# %#: '%' if not root, '#' otherwise
+autoload -Uz promptinit
+promptinit
+PROMPT='%F{green}%n@%m%f:%F{blue}%~%f %# '
+
+# --- Zsh History Settings ---
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=10000
+SAVEHIST=10000
+setopt APPEND_HISTORY      # append history to .zsh_history
+setopt SHARE_HISTORY       # share history between all sessions
+setopt HIST_EXPIRE_DUPS_FIRST # delete earlier duplicates
+setopt HIST_IGNORE_DUPS    # ignore consecutive duplicates
+setopt HIST_IGNORE_SPACE   # ignore commands that start with space
+setopt HIST_SAVE_NO_DUPS   # do not save duplicates
+setopt HIST_VERIFY         # verify command before saving to history
+setopt EXTENDED_HISTORY    # record command start and end timestamps
+
+# --- Zsh Completion Settings ---
+autoload -Uz compinit
+compinit
+
+# --- Other Zsh settings ---
+setopt auto_cd # automatically cd into a directory without typing 'cd'
+setopt no_beep # disable terminal bell
+
+# --- FZF (Fuzzy Finder) integration ---
+# Add fzf key bindings and fuzzy completion if available
+if command -v fzf >/dev/null 2>&1; then
+    if [[ -f "/usr/local/opt/fzf/shell/key-bindings.zsh" ]]; then # macOS Homebrew path
+        source "/usr/local/opt/fzf/shell/key-bindings.zsh"
+    elif [[ -f "/usr/share/fzf/key-bindings.bash" ]]; then # Linux path
+        source "/usr/share/fzf/key-bindings.bash"
+    fi
+    # Add completion
+    if [[ -f "/usr/local/opt/fzf/shell/completion.zsh" ]]; then # macOS Homebrew path
+        source "/usr/local/opt/fzf/shell/completion.zsh"
+    elif [[ -f "/usr/share/fzf/completion.bash" ]]; then # Linux path
+        source "/usr/share/fzf/completion.bash"
+    fi
+fi

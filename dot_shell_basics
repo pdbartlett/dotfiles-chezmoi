@@ -1,0 +1,50 @@
+# ~/.shell_basics
+# POSIX-compliant shell basics for export commands, PATH logic, environment variables and simple aliases.
+# Sourced by .profile, .zshenv, and implicitly by .shell_interactives
+
+# --- Smart Path Function ---
+# Prevents duplicate entries in $PATH and adds only existing directories.
+path_add() {
+    if [ -d "$1" ]; then
+        # Remove duplicate entries first
+        PATH=$(echo "$PATH" | tr -s ':' '
+' | grep -v "^$1$" | tr -s '
+' ':')
+        # Add to the beginning of the PATH
+        PATH="$1:$PATH"
+    fi
+}
+
+# --- Default PATH Setup ---
+# Initialize PATH with standard directories.
+# Make sure /usr/local/bin comes before /usr/bin for local overrides.
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+# --- Add common directories to PATH using the smart function ---
+# Example: User-specific binaries
+path_add "$HOME/.local/bin"
+path_add "$HOME/bin"
+path_add "/usr/local/sbin" # Often contains additional tools
+
+# --- Common Environment Variables ---
+export EDITOR="vi" # Set your preferred editor
+export PAGER="less"
+export CLICOLOR="1" # Enable colored output where supported
+export LSCOLORS="Gxfxcxdxbxegedabagacad" # Mac-specific LS colors, adjust for Linux if needed
+
+# Set default locale to avoid issues with some commands
+export LANG="en_US.UTF-8"
+export LC_ALL="en_US.UTF-8"
+
+# --- Aliases ---
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+alias grep='grep --color=auto'
+alias tree="tree -C" # Enable colors for tree command
+
+# Ensure PATH is exported after all modifications
+export PATH
+
+# Unset the helper function
+unset -f path_add

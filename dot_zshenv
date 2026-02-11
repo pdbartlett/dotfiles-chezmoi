@@ -1,0 +1,12 @@
+# ~/.zshenv
+# Zsh environment setup, sourced by all Zsh invocations (login, interactive, non-interactive).
+# Used to set PATH and environment variables that should be available everywhere.
+
+# Source the common shell basics for PATH and environment variables.
+if test -f "$HOME/.shell_basics"; then
+    . "$HOME/.shell_basics"
+fi
+
+# IMPORTANT: Avoid setting aliases or functions here, as .zshenv is sourced
+# even for non-interactive shells and scripts, which can lead to unexpected behavior.
+# Interactive settings should go into .zshrc.

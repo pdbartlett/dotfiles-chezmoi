@@ -1,0 +1,15 @@
+# ~/.bash_profile
+# This file is sourced by Bash login shells.
+# On macOS, it's often preferred over .profile for Bash.
+
+# Source .profile for common login shell settings (PATH, environment variables).
+# This prevents duplicating logic from .profile.
+if test -f "$HOME/.profile"; then
+    . "$HOME/.profile"
+fi
+
+# Source .bashrc for interactive shell features like aliases and functions.
+# This ensures that interactive settings are available in login shells too.
+if test -f "$HOME/.bashrc"; then
+    . "$HOME/.bashrc"
+fi

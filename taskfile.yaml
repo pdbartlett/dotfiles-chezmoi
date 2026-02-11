@@ -1,5 +1,7 @@
 version: '3'
 
+output: interleaved # This shows output as it happens
+
 tasks:
   provision:
     desc: "Bootstrap a new node: Seed key and let chezmoi build the rest"
@@ -29,3 +31,7 @@ tasks:
         ssh "{{.NODE}}-raw" "./.local/bin/chezmoi init --apply --force --no-tty https://github.com/pdbartlett/dotfiles-chezmoi.git"
         
         echo "✅ {{.NODE}} is fully provisioned!"
+
+  update-all:
+    desc: "Attempts to run all updates"
+    cmd: echo "TODO"

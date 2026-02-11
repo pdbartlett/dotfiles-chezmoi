@@ -1,0 +1,28 @@
+# ~/.bashrc
+# Interactive shell configuration for Bash.
+# Sourced by interactive non-login Bash shells.
+
+# --- Source system-wide bashrc if it exists ---
+if test -f "/etc/bash.bashrc"; then
+    . "/etc/bash.bashrc"
+fi
+
+# --- Source common interactive settings ---
+if test -f "$HOME/.shell_interactives"; then
+    . "$HOME/.shell_interactives"
+fi
+
+# --- Bash-specific Prompt (PS1) ---
+# Modern and informative PS1
+# \u: username
+# \h: hostname up to first '.'
+# \w: current working directory, with $HOME abbreviated with a tilde
+# \$: '#' if root, '$' otherwise
+# \[...\]: non-printing characters (for color codes)
+export PS1="\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ "
+
+# --- Bash History Settings ---
+HISTCONTROL=ignoreboth # ignore duplicates and commands that start with space
+HISTSIZE=10000        # number of lines to store in history list
+HISTFILESIZE=20000    # number of lines to store in history file
+shopt -s histappend   # append to history file, don't overwrite

@@ -1,0 +1,63 @@
+# ~/.shell_interactives
+# Contains functions and interactive shell settings.
+# Sourced by .bashrc and .zshrc.
+
+# --- Guard against double-sourcing ---
+# This ensures the file is only sourced once per shell session.
+if [ -n "$_SHELL_INTERACTIVES_SOURCED" ]; then
+  return
+fi
+_SHELL_INTERACTIVES_SOURCED=1
+
+# --- Source Common Basics ---
+# This ensures that environment variables and PATH are set up.
+# Using 'test -f' for POSIX compliance, avoiding specific shell builtins like '[[ -f'
+if test -f "$HOME/.shell_basics"; then
+    . "$HOME/.shell_basics"
+fi
+
+# --- Functions ---
+mkcd() {
+    mkdir -p "$1" && cd "$1"
+}
+sh_resource() {
+    unset _SHELL_INTERACTIVES_SOURCED
+    if [ -n "$BASH_VERSION" ]; then
+        [ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
+        echo "Bash configuration reloaded."
+    elif [ -n "$ZSH_VERSION" ]; then
+        [ -f "$HOME/.zshrc" ] && . "$HOME/.zshrc"
+        echo "Zsh configuration reloaded."
+    fi
+}
+tm() {
+    tmux new-session -A -s main
+}
+
+# --- Optional settings ---
+{{ $brewExe := findExecutable "brew" (list "/opt/homebrew/bin" (joinPath .chezmoi.homeDir "homebrew/bin")) }}
+{{- if $brewExe -}}
+{{- $brewDir := dir $brewExe -}}
+# Homebrew (first as may bring multiple executables into PATH)
+export PATH="{{ $brewDir }}:$PATH"
+{{- end }}
+{{ if lookPath "chezmoi" }}
+# chezmoi
+alias cm=chezmoi
+sh_reload() {
+    echo "Reloading shell settings with chezmoi"
+    if chezmoi update; then
+        sh_resource
+    else
+        echo "'chezmoi update' failed; shell settings not re-sourced"
+    fi
+}
+sh_reapply() {
+    echo "Reapplying shell settings with chezmoi"
+    if chezmoi apply; then
+        sh_resource
+    else
+        echo "'chezmoi update' failed; shell settings not re-sourced"
+    fi
+}
+{{- end }}

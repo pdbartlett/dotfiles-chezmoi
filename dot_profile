@@ -1,0 +1,15 @@
+# ~/.profile
+# The primary login shell configuration for Bourne-compatible shells (sh, bash).
+# Sourced by login shells.
+
+# Source the common shell basics for PATH and environment variables.
+if test -f "$HOME/.shell_basics"; then
+    . "$HOME/.shell_basics"
+fi
+
+# Example: User-specific environment variables for login shells only
+# export FOO_VAR="login_only_value"
+
+# If you have a separate .bash_profile for bash login shells,
+# ensure it sources .bashrc for interactive features.
+# For simplicity, this .profile covers sh and general bash login behavior.
