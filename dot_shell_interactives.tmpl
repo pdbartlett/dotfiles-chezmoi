@@ -16,7 +16,8 @@ if test -f "$HOME/.shell_basics"; then
     . "$HOME/.shell_basics"
 fi
 
-# --- Functions ---
+# --- Aliases / functions ---
+alias utd='task update_all'
 mkcd() {
     mkdir -p "$1" && cd "$1"
 }
@@ -40,6 +41,14 @@ tm() {
 {{- $brewDir := dir $brewExe -}}
 # Homebrew (first as may bring multiple executables into PATH)
 export PATH="{{ $brewDir }}:$PATH"
+export HOMEBREW_AUTO_UPDATE_SECS=14400
+export HOMEBREW_CLEANUP_MAX_AGE_DAYS=28
+export HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS=7
+export HOMEBREW_FORBIDDEN_LICENSES="AGPL-1.0-or-later OSL-1.0+ SSPL-1.0+ CAL-1.0 CPAL-1.0+ CPOL-1.02 EUPL-1.0+ SISSL SISSL-1.2+ Watcom-1.0+ CC-BY-NC-1.0+ CC-BY-NC-ND-1.0+ CC-BY-NC-SA-1.0+"
+export HOMEBREW_FORCE_BREWED_CURL=1
+export HOMEBREW_FORCE_BREWED_GIT=1
+export HOMEBREW_NO_INSECURE_REDIRECT=1
+export HOMEBREW_UPGRADE_GREEDY=1
 {{- end }}
 {{ if lookPath "chezmoi" }}
 # chezmoi
@@ -60,4 +69,25 @@ sh_reapply() {
         echo "'chezmoi update' failed; shell settings not re-sourced"
     fi
 }
+{{- end }}
+{{ if lookPath "uv" -}}
+{{- $globalPath := joinPath .chezmoi.homeDir ".global_uv" -}}
+{{- if stat $globalPath -}}
+# uv
+## Core Execution
+alias gpy='uv run --project ~/.global_uv python'
+alias gipy='uv run --project ~/.global_uv ipython'
+alias gjup='uv run --project ~/.global_uv jupyter lab --ip=0.0.0.0'
+## Management (Add/Remove packages from anywhere)
+alias gadd='uv add --project ~/.global_uv'
+alias gpip='uv add --project ~/.global_uv'
+alias grm='uv remove --project ~/.global_uv'
+## Maintenance & Inspection
+alias gsync='uv sync --project ~/.global_uv'
+alias glock='uv lock --upgrade --project ~/.global_uv'
+alias gout='uv pip list --outdated --project ~/.global_uv'
+alias gtree='uv tree --project ~/.global_uv'
+## Navigation
+alias cdg='cd ~/.global_uv'
+{{- end -}}
 {{- end }}

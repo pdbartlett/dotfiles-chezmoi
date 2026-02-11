@@ -1,0 +1,132 @@
+version: '3'
+
+output: group
+
+tasks:
+  remote_provision_settings:
+    desc: "Bootstrap a new node's settings; seed keys and let chezmoi build the rest"
+    aliases: [rps]
+    cmds:
+      - |
+        if [ -z '{{ "{{" }}.NODE{{ "}}" }}' ]; then
+          echo "❌ Error: Specify a node. Example: task provision NODE=macmini"
+          exit 1
+        fi
+
+        RAW_HOST='{{ "{{" }}.NODE{{ "}}" }}-raw'
+        CONF_DIR=".config/chezmoi"
+        
+        echo "Step 1: 🔑 Authorizing MBP key..."
+        ssh-copy-id -i ~/.ssh/id_ed25519.pub "${RAW_HOST}"
+
+        echo "Step 2: 🛠 Installing chezmoi..."
+        ssh "${RAW_HOST}" "mkdir -p .local/bin && curl -fsLS get.chezmoi.io/lb | sh"
+
+        echo "Step 3: 📁 Creating config directory..."
+        ssh "${RAW_HOST}" "mkdir -p ${CONF_DIR}"
+        
+        echo "Step 4: 🛰 Transferring ONLY the master key..."
+        scp ~/.config/chezmoi/key.txt "${RAW_HOST}:${CONF_DIR}/"
+        
+        echo "Step 5: 🚀 Initializing (Automated/No-TTY mode)..."
+        ssh '{{ "{{" }}.NODE{{ "}}" }}-raw' "./.local/bin/chezmoi init --apply --force --no-tty https://github.com/pdbartlett/dotfiles-chezmoi.git"
+        
+        echo '✅ {{ "{{" }}.NODE{{ "}}" }} is fully provisioned!'
+
+  install_uv:
+    desc: "Install uv Python manager and creates global environment"
+    status:
+      - command -v uv
+    cmds:
+      - curl -LsSf https://astral.sh/uv/install.sh | sh
+
+  create_global_uv:
+    preconditions:
+      - sh: "command -v uv"
+        msg: "uv is not installed; run 'task install_uv' first."
+    dir: "~/.global_uv"
+    status:
+      - test -f ~/.global_uv/pyproject.toml
+    cmds:
+      - uv init --bare ~/.global_uv --name guv
+      - uv add --project ~/.global_uv pandas polars numpy jupyterlab ipython scipy matplotlib seaborn
+
+  update_uv:
+    desc: "Update uv Python manager"
+    prerequisites:
+      - sh: "command -v uv"
+        msg: "uv is not installed. Run 'task install_uv' first."
+    cmds:
+      - uv self update
+      - task: update_global_uv
+
+  update_global_uv:
+    internal: true
+    cmds:
+      - |
+        if [ ! -d "$HOME/.global_uv" ]; then
+          echo "💡 Skipping: No global uv environment found."
+          exit 0
+        fi
+        cd ~/.global_uv
+        uv lock --upgrade
+        uv sync
+
+  install_common_packages:
+    internal: true
+    cmds:
+      - "{{ "{{" }}.PKGCMD{{ "}}" }} tmux"
+      - task: install_uv
+
+  local_provision_software:
+    desc: "Install default packages locally"
+    aliases: [lps]
+    cmds:
+      {{- if eq .chezmoi.os "darwin" }}
+      - rm "${HOME}/.local/bin/chezmoi" 2>/dev/null || true
+      - brew install chezmoi
+      - brew install curl
+      - brew install git
+      {{- end }}
+      - task: install_common_packages
+        vars:
+          {{- if eq .chezmoi.os "darwin" }}
+          PKGCMD: "brew install"
+          {{- else }}
+          PKGCMD: "sudo apt install -y"
+          {{- end }}
+
+  {{ if eq .chezmoi.os "darwin" -}}
+  install_desktop:
+    desc: "Install desktop tools no needed on headless server"
+    cmds:
+      - brew install --cask google-chrome
+      - brew install --cask google-drive
+      - brew install --cask vscode
+      
+  update_brew:
+    desc: "Update homebrew packages"
+    cmds:
+      - brew update
+      - brew outdated
+      - brew upgrade
+  {{- else -}}
+  update_apt:
+    desc: "Update apt packages"
+    cmds:
+      - sudo apt update
+      - sudo apt full-upgrade -y
+      - sudo apt autoremove
+      - sudo apt clean
+  {{- end }}
+
+  update_all:
+    desc: "Update all 'managed' software"
+    cmds:
+      {{- if eq .chezmoi.os "darwin" }}
+      - task: update_brew
+      {{- else -}}
+      - task: update_apt
+      {{- end }}
+      - task: update_uv
+

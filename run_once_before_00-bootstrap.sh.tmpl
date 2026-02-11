@@ -1,0 +1,42 @@
+#!/bin/bash
+
+{{ if eq .chezmoi.os "darwin" -}}
+if ! xcode-select -p >/dev/null 2>&1; then
+  echo "Installing XCode CLT..."
+  sudo touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+  PROD=$(softwareupdate -l | grep "\*.*Command Line" | head -n 1 | awk -F"*" '{print $2}' \
+      | sed -e 's/^ *//' | tr -d '\n')
+  sudo softwareupdate -i "$PROD" --verbose
+  sudo rm /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+else
+  echo "XCode CLT already installed."
+fi
+
+if [ ! -f "/opt/homebrew/bin/brew" ] && [ ! -f "/usr/local/bin/brew" ]; then
+  echo "Installing Homebrew..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  {{ if eq .chezmoi.arch "arm64" -}}
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+  {{ else -}}
+  eval "$(/usr/local/bin/brew shellenv)"
+  {{ end -}}
+else
+  echo "Homebrew already installed."
+  {{ if eq .chezmoi.arch "arm64" -}}
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+  {{ else -}}
+  eval "$(/usr/local/bin/brew shellenv)"
+  {{ end -}}
+fi
+{{- end }}
+
+{{ if lookPath "task" -}}
+echo "Task already installed."
+{{ else -}}
+echo "Installing Task..."
+{{ if eq .chezmoi.os "darwin" -}}
+brew install go-task
+{{ else -}}
+sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
+{{ end -}}
+{{ end -}}
