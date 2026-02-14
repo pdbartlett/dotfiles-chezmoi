@@ -1,7 +1,7 @@
 version: '3'
 
 set: [errexit, nounset, pipefail]
-output: group
+output: interleaved
 
 tasks:
   remote_provision_settings:
@@ -33,19 +33,8 @@ tasks:
         ssh '{{ "{{" }}.NODE{{ "}}" }}-raw' "./.local/bin/chezmoi init --apply --force --no-tty git@github.com:pdbartlett/dotfiles.git"
         
         echo '✅ {{ "{{" }}.NODE{{ "}}" }} is fully provisioned!'
-
-  create_global_uv:
-    preconditions:
-      - sh: "command -v uv"
-        msg: "uv is not installed; run 'task install_uv' first."
-    dir: "~/.global_uv"
-    status:
-      - test -f ~/.global_uv/pyproject.toml
-    cmds:
-      - uv init --bare ~/.global_uv --name guv
-      - uv add --project ~/.global_uv pandas polars numpy jupyterlab ipython scipy matplotlib seaborn
-
-  update_global_uv:
+{{- if stat (joinPath .chezmoi.homeDir ".global_uv") }}
+  update:global_uv:
     internal: true
     cmds:
       - |
@@ -56,7 +45,18 @@ tasks:
         cd ~/.global_uv
         uv lock --upgrade
         uv sync
-
+{{- else }}
+  create:global_uv:
+    desc: "Create the global UV science environment"
+    cmds:
+      - rm -rf ~/.global_uv
+      - uv init --bare ~/.global_uv --name guv
+      - sed -i '' '/requires-python/d' ~/.global_uv/pyproject.toml
+      - uv python pin 3 --project ~/.global_uv
+      - |
+        uv add --project ~/.global_uv \
+          pandas polars numpy jupyterlab ipython scipy matplotlib seaborn
+{{ end }}
 {{- range .apps }}
   {{- $any_up := index . "any_update" }}
   {{- $osx_up := index . "osx_update" }}
@@ -143,6 +143,9 @@ tasks:
       - banner "Updating {{ .name }}"
       - task: update:{{ .name }}
   {{- end }}
+{{- end }}
+{{- if stat (joinPath .chezmoi.homeDir ".global_uv") }}
+      - task: update:global_uv
 {{- end }}
       - task: cleanup
 
