@@ -1,0 +1,72 @@
+apps:
+  # --- CLI Essentials (Group: common) ---
+  - { name: age, group: common, check: age, osx_install: brew install age }
+  - { name: chezmoi, group: common, check: chezmoi, osx_install: brew install chezmoi }
+  - { name: curl, group: common, check: curl, osx_install: brew install curl }
+  - { name: git, group: common, check: git, osx_install: brew install git }
+  - { name: gnupg, group: common, check: gpg, osx_install: brew install gnupg }
+  - { name: go-task, group: common, check: task, osx_install: brew install go-task }
+  - { name: hr, group: common, check: hr, osx_install: brew install hr }
+  - { name: tmux, group: common, check: tmux, osx_install: brew install tmux }
+  - { name: wget, group: common, check: wget, osx_install: brew install wget }
+
+  # --- Desktop Apps (Group: desktop) ---
+  - { name: caffeine, group: desktop, check_app: Caffeine.app, osx_install: brew install --cask caffeine }
+  - { name: google-chrome, group: desktop, check_app: "Google Chrome.app", osx_install: brew install --cask google-chrome }
+  - { name: google-drive, group: desktop, check_app: "Google Drive.app", osx_install: brew install --cask google-drive }
+  - { name: kitty, group: desktop, check_app: kitty.app, osx_install: brew install --cask kitty }
+
+  # --- Optional (Group: optional) ---
+  - { name: bun, group: optional, check: bun, osx_install: brew install oven-sh/bun/bun }
+  - { name: bibdesk, group: optional, check_app: BibDesk.app, osx_install: brew install --cask bibdesk }
+  - { name: cookcli, group: optional, check: cook, osx_install: brew install cookcli }
+  - { name: deno, group: optional, check: deno, osx_install: brew install deno }
+  - { name: go, group: optional, check: go, osx_install: brew install go }
+  - { name: libreoffice, group: optional, check_app: LibreOffice.app, osx_install: brew install --cask libreoffice }
+  - { name: mactex, group: optional, check_app: TeX, osx_install: brew install --cask mactex }
+  - { name: micromamba, group: optional, check: micromamba, osx_install: brew install micromamba }
+  - { name: obsidian, group: optional, check_app: Obsidian.app, osx_install: brew install --cask obsidian }
+  - { name: pandoc, group: optional, check: pandoc, osx_install: brew install pandoc }
+  - { name: quarto, group: optional, check_app: quarto, osx_install: brew install --cask quarto }
+  - { name: r, group: optional, check: R, osx_install: brew install r }
+  - { name: rustup, group: optional, check: rustup, any_install: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y", any_update: "rustup self update && rustup update" }
+  - { name: sccache, group: optional, check: sccache, osx_install: brew install sccache }
+  - { name: texshop, group: optional, check_app: TeXShop.app, osx_install: brew install --cask texshop }
+  - { name: texstudio, group: optional, check_app: texstudio.app, osx_install: brew install --cask texstudio }
+  - { name: uv, group: optional, check: uv, any_install: "curl -LsSf https://astral.sh/uv/install.sh | sh", any_update: "uv self update" }
+  - { name: visual-studio-code, group: optional, check_app: "Visual Studio Code.app", osx_install: brew install --cask visual-studio-code }
+
+  # --- Fonts (Group: fonts) ---
+  - { name: fira-code, group: fonts, osx_install: "brew install --cask font-fira-code" }
+  - { name: fira-nerd, group: fonts, osx_install: "brew install --cask font-fira-code-nerd-font" }
+  - { name: fira-mono-nerd, group: fonts, osx_install: "brew install --cask font-fira-mono-nerd-font" }
+  - { name: fira-sans, group: fonts, osx_install: "brew install --cask font-fira-sans" }
+  - { name: hack-nerd, group: fonts, osx_install: "brew install --cask font-hack-nerd-font" }
+  - { name: ibm-plex, group: fonts, osx_install: "brew install --cask font-ibm-plex" }
+  - { name: inconsolata, group: fonts, osx_install: "brew install --cask font-inconsolata" }
+  - { name: jetbrains-nerd, group: fonts, osx_install: "brew install --cask font-jetbrains-mono-nerd-font" }
+  - { name: monaspace, group: fonts, osx_install: "brew install --cask font-monaspace" }
+  - { name: noto-mono, group: fonts, osx_install: "brew install --cask font-noto-mono" }
+  - { name: noto-sans-mono, group: fonts, osx_install: "brew install --cask font-noto-sans-mono" }
+  - { name: reddit-mono, group: fonts, osx_install: "brew install --cask font-reddit-mono" }
+  - { name: symbols-nerd, group: fonts, osx_install: "brew install --cask font-symbols-only-nerd-font" }
+
+  # Special treatment
+  - name: nvm
+    group: common
+    check: nvm-marker
+    any_install: |
+      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+      mkdir -p ~/.local/bin
+      touch ~/.local/bin/nvm-marker
+      chmod +x ~/.local/bin/nvm-marker
+  - name: tex_live_utility
+    group: optional
+    check: tlmgr
+    osx_install: brew install --cask tex-live-utility
+    osx_update: |
+      TLM=$(which tlmgr)
+      echo "🔐 Requesting sudo for MacTeX updates..."
+      sudo -v
+      sudo "${TLM}" update --self --all
+

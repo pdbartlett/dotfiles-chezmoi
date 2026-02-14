@@ -19,7 +19,16 @@ path_add() {
 # Initialize PATH with standard directories.
 # Make sure /usr/local/bin comes before /usr/bin for local overrides.
 export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+{{- if eq .chezmoi.os "darwin" }}
+# Allow OS X to make its amendments
+# Load macOS system paths (MacTeX, etc.)
+if [ -x /usr/libexec/path_helper ]; then
+    eval $(/usr/libexec/path_helper -s)
+fi
 
+# Now add your custom paths so they take precedence
+export PATH="$HOME/.local/bin:$PATH"
+{{- end }}
 # --- Add common directories to PATH using the smart function ---
 # Example: User-specific binaries
 path_add "$HOME/.local/bin"
@@ -36,7 +45,7 @@ export LSCOLORS="Gxfxcxdxbxegedabagacad" # Mac-specific LS colors, adjust for Li
 export LANG="en_US.UTF-8"
 export LC_ALL="en_US.UTF-8"
 
-# --- Aliases ---
+# --- Aliases / Functions ---
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'

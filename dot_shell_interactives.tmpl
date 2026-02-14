@@ -50,9 +50,14 @@ export HOMEBREW_FORCE_BREWED_GIT=1
 export HOMEBREW_NO_INSECURE_REDIRECT=1
 export HOMEBREW_UPGRADE_GREEDY=1
 {{- end }}
+{{ if stat (joinPath .chezmoi.homeDir ".cargo" "env") }}
+# cargo / rustup
+. "${HOME}/.cargo/env"
+{{- end}}
 {{ if lookPath "chezmoi" }}
 # chezmoi
 alias cm=chezmoi
+
 sh_reload() {
     echo "Reloading shell settings with chezmoi"
     if chezmoi update; then
@@ -61,6 +66,7 @@ sh_reload() {
         echo "'chezmoi update' failed; shell settings not re-sourced"
     fi
 }
+
 sh_reapply() {
     echo "Reapplying shell settings with chezmoi"
     if chezmoi apply; then
@@ -68,6 +74,24 @@ sh_reapply() {
     else
         echo "'chezmoi update' failed; shell settings not re-sourced"
     fi
+}
+{{- end }}
+{{ if stat (joinPath  .chezmoi.homeDir ".nvm") -}}
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+{{- end }}
+{{ if lookPath "tlmgr" -}}
+# Tex (tlmgr)
+tlu() {
+    if ! command -v tlmgr &> /dev/null; then
+        echo "❌ tlmgr not found."
+        return 1
+    fi
+    local TLM=$(which tlmgr)
+    echo "🔐 Requesting sudo for MacTeX updates..."
+    sudo -v
+    sudo "${TLM}" update --self --all
 }
 {{- end }}
 {{ if lookPath "uv" -}}

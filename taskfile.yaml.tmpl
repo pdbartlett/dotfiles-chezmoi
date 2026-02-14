@@ -1,5 +1,6 @@
 version: '3'
 
+set: [errexit, nounset, pipefail]
 output: group
 
 tasks:
@@ -33,13 +34,6 @@ tasks:
         
         echo '✅ {{ "{{" }}.NODE{{ "}}" }} is fully provisioned!'
 
-  install_uv:
-    desc: "Install uv Python manager and creates global environment"
-    status:
-      - command -v uv
-    cmds:
-      - curl -LsSf https://astral.sh/uv/install.sh | sh
-
   create_global_uv:
     preconditions:
       - sh: "command -v uv"
@@ -50,15 +44,6 @@ tasks:
     cmds:
       - uv init --bare ~/.global_uv --name guv
       - uv add --project ~/.global_uv pandas polars numpy jupyterlab ipython scipy matplotlib seaborn
-
-  update_uv:
-    desc: "Update uv Python manager"
-    prerequisites:
-      - sh: "command -v uv"
-        msg: "uv is not installed. Run 'task install_uv' first."
-    cmds:
-      - uv self update
-      - task: update_global_uv
 
   update_global_uv:
     internal: true
@@ -72,61 +57,132 @@ tasks:
         uv lock --upgrade
         uv sync
 
-  install_common_packages:
-    internal: true
+{{- range .apps }}
+  {{- $any_up := index . "any_update" }}
+  {{- $osx_up := index . "osx_update" }}
+  {{- $any_inst := index . "any_install" }}
+  {{- $osx_inst := index . "osx_install" }}
+  {{- $check_app := index . "check_app" }}
+  {{- $check_bin := index . "check" }}
+  {{- $is_osx := eq $.chezmoi.os "darwin" }}
+  {{- $installed := false -}}
+  {{- if $check_bin }}{{ if lookPath $check_bin }}{{ $installed = true }}{{ end }}{{ end -}}
+  {{- if and (not $installed) $is_osx $check_app -}}
+    {{- if stat (joinPath "/Applications" $check_app) }}{{ $installed = true }}{{ end -}}
+  {{- end -}}
+  {{- if not $installed }}
+  install:{{ .name }}:
+    desc: "Install {{ .name }}"
     cmds:
-      - "{{ "{{" }}.PKGCMD{{ "}}" }} tmux"
-      - task: install_uv
-
-  local_provision_software:
-    desc: "Install default packages locally"
-    aliases: [lps]
-    cmds:
-      {{- if eq .chezmoi.os "darwin" }}
-      - rm "${HOME}/.local/bin/chezmoi" 2>/dev/null || true
-      - brew install chezmoi
-      - brew install curl
-      - brew install git
+      {{- if $any_inst }}
+      - |
+{{ $any_inst | indent 8 }}
+      {{- else if and $is_osx $osx_inst }}
+      - |
+{{ $osx_inst | indent 8}}
       {{- end }}
-      - task: install_common_packages
-        vars:
-          {{- if eq .chezmoi.os "darwin" }}
-          PKGCMD: "brew install"
-          {{- else }}
-          PKGCMD: "sudo apt install -y"
-          {{- end }}
-
-  {{ if eq .chezmoi.os "darwin" -}}
-  install_desktop:
-    desc: "Install desktop tools no needed on headless server"
-    cmds:
-      - brew install --cask google-chrome
-      - brew install --cask google-drive
-      - brew install --cask vscode
-      
-  update_brew:
-    desc: "Update homebrew packages"
-    cmds:
-      - brew update
-      - brew outdated
-      - brew upgrade
-  {{- else -}}
-  update_apt:
-    desc: "Update apt packages"
-    cmds:
-      - sudo apt update
-      - sudo apt full-upgrade -y
-      - sudo apt autoremove
-      - sudo apt clean
   {{- end }}
 
-  update_all:
-    desc: "Update all 'managed' software"
-    cmds:
-      {{- if eq .chezmoi.os "darwin" }}
-      - task: update_brew
-      {{- else -}}
-      - task: update_apt
-      {{- end }}
-      - task: update_uv
+  {{- $any_up := index . "any_update" -}}
+  {{- $osx_up := index . "osx_update" -}}
 
+  {{- if and $installed (or $any_up $osx_up) }}
+  update:{{ .name }}:
+    cmds:
+      {{- if $any_up }}
+      - |
+{{ $any_up | indent 8 }}
+      {{- else if and $is_osx $osx_up }}
+      - |
+{{ $osx_up | indent 8 }}
+      {{- end }}
+  {{- end }}
+{{- end }}
+
+  # --- Aggregators ---
+
+  install:common:
+    desc: "Install all common CLI tools"
+    cmds:
+{{- range .apps }}
+  {{- if and (eq .group "common") (not (lookPath .check)) }}
+      - task: install:{{ .name }}
+  {{- end }}
+{{- end }}
+
+  install:fonts:
+    desc: "Install all fonts"
+    cmds:
+{{- range .apps }}
+  {{- if eq .group "fonts" }}
+      - task: install:{{ .name }}
+  {{- end }}
+{{- end }}
+
+  update:all:
+    desc: "Perform system upgrade and specialized tool updates"
+    ignore_error: true
+    silent: true
+    cmds:
+      - banner "System Package Manager"
+      {{- if eq .chezmoi.os "darwin" }}
+      - brew update && brew upgrade || true
+      {{- else -}}
+      - sudo apt update
+      - sudo apt full-upgrade -y
+      {{- end }}
+{{- $is_osx := eq .chezmoi.os "darwin" -}}
+{{- range .apps }}
+  {{- $any_up := index . "any_update" -}}
+  {{- $osx_up := index . "osx_update" -}}
+  {{- $chk := index . "check" -}}
+  {{- if and $is_osx $chk (lookPath $chk) (or $any_up $osx_up) }}
+      - banner "Updating {{ .name }}"
+      - task: update:{{ .name }}
+  {{- else if and $chk (lookPath $chk) $any_up }}
+      - banner "Updating {{ .name }}"
+      - task: update:{{ .name }}
+  {{- end }}
+{{- end }}
+      - task: cleanup
+
+  cleanup:
+    desc: "Purge caches and old versions"
+    ignore_error: true
+    silent: true
+    cmds:
+      - banner "Cleaning Homebrew"
+      - brew cleanup -s &> /dev/null
+      {{- if lookPath "uv" }}
+      - banner "Cleaning uv cache"
+      - uv cache clean &> /dev/null
+      {{- end }}
+      {{- if lookPath "micromamba" }}
+      - banner "Cleaning Micromamba"
+      - micromamba clean --all --yes &> /dev/null
+      {{- end }}
+      {{- if lookPath "tlmgr" }}
+      - banner "Cleaning TeX Live backups"
+      - sudo tlmgr backup --clean --all &> /dev/null
+      {{- end }}
+
+  doctor:
+    desc: "Diagnostic view of all managed apps"
+    silent: true
+    cmds:
+      - banner "System Environment"
+      - "printf 'OS: %s\n' '{{"{{"}}OS{{"}}"}}'"
+      - "printf 'Path Helper Check: %s\n' \"$(command -v tlmgr || echo 'NOT FOUND')\""
+      - banner "Managed Apps Status"
+{{- range .apps }}
+      {{- $installed := false -}}
+      {{- if index . "check" }}{{ if lookPath .check }}{{ $installed = true }}{{ end }}{{ end -}}
+      {{- if and (not $installed) (eq $.chezmoi.os "darwin") (index . "check_app") -}}
+        {{- if stat (joinPath "/Applications" (index . "check_app")) }}{{ $installed = true }}{{ end -}}
+      {{- end -}}
+      {{- if $installed }}
+      - printf '%-20s [INSTALLED]\n' "{{.name}}"
+      {{- else  }}
+      - printf '%-20s [MISSING]\n' "{{.name}}"
+      {{- end }}
+{{- end }}

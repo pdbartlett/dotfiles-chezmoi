@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Fallback to 80 if COLUMNS isn't set
+WIDTH=${COLUMNS:-80}
+
+# If the real 'hr' is installed, use it with fixed width
+if command -v hr >/dev/null 2>&1; then
+    COLUMNS=$WIDTH hr "$@"
+else
+    # Simple polyfill: draw a line of the first argument (default #)
+    CHAR="${1:-#}"
+    # Use printf to repeat the character
+    printf "%${WIDTH}s\n" | tr " " "$CHAR"
+fi
