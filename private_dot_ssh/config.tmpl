@@ -20,6 +20,20 @@ Host {{ .name }}-raw
 
 {{- end }}
 
+# Cloud
+
+# --- Oracle "always free" micro-instance ---
+Host oci-free
+  HostName 84.8.151.76
+  User ubuntu
+  RequestTTY yes
+  RemoteCommand /usr/bin/tmux new-session -A -s main
+
+Host oci-free-raw
+  HostName 84.8.151.76
+  User ubuntu
+
+# Others
 Host github.com
   HostName github.com
   User git

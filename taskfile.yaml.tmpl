@@ -4,9 +4,9 @@ set: [errexit, nounset, pipefail]
 output: interleaved
 
 tasks:
-  remote_provision_settings:
+  remote_provision_settings_home:
     desc: "Bootstrap a new node's settings; seed keys and let chezmoi build the rest"
-    aliases: [rps]
+    aliases: [rpsh]
     cmds:
       - |
         if [ -z '{{ "{{" }}.NODE{{ "}}" }}' ]; then
@@ -29,8 +29,39 @@ tasks:
         echo "Step 4: 🛰 Transferring ONLY the master key..."
         scp ~/.config/chezmoi/key.txt "${RAW_HOST}:${CONF_DIR}/"
         
-        echo "Step 5: 🚀 Initializing (Automated/No-TTY mode)..."
-        ssh '{{ "{{" }}.NODE{{ "}}" }}-raw' "./.local/bin/chezmoi init --apply --force --no-tty git@github.com:pdbartlett/dotfiles.git"
+        echo "Step 5: 🔑 Adding github.com to known_hosts..."
+        ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts
+
+        echo "Step 6: 🚀 Initializing chezmoi from Git over SSH..."
+        ssh '{{ "{{" }}.NODE{{ "}}" }}-raw' "./.local/bin/chezmoi init --no-tty git@github.com:pdbartlett/dotfiles-chezmoi.git"
+        
+        echo "Step 7: 🚀 Applying chezmoi settings..."
+        ssh '{{ "{{" }}.NODE{{ "}}" }}-raw' "./.local/bin/chezmoi apply --force"
+        
+        echo '✅ {{ "{{" }}.NODE{{ "}}" }} is fully provisioned!'
+  remote_provision_settings_other:
+    desc: "Bootstrap a new node's settings; but with no private keys deployed"
+    aliases: [rpso]
+    cmds:
+      - |
+        if [ -z '{{ "{{" }}.NODE{{ "}}" }}' ]; then
+          echo "❌ Error: Specify a node. Example: task provision NODE=oci-free"
+          exit 1
+        fi
+
+        RAW_HOST='{{ "{{" }}.NODE{{ "}}" }}-raw'
+        
+        echo "Step 1: 🔑 Authorizing MBP key..."
+        ssh-copy-id -i ~/.ssh/id_ed25519.pub "${RAW_HOST}"
+
+        echo "Step 2: 🛠 Installing chezmoi..."
+        ssh "${RAW_HOST}" "mkdir -p .local/bin && curl -fsLS get.chezmoi.io/lb | sh"
+
+        echo "Step 3: 🚀 Initializing chezmoi from Git over HTTPS..."
+        ssh '{{ "{{" }}.NODE{{ "}}" }}-raw' "./.local/bin/chezmoi init --apply https://github.com/pdbartlett/dotfiles-chezmoi.git --exclude=encrypted --force"
+        
+        echo "Step 7: 🚀 Applying chezmoi settings..."
+        ssh '{{ "{{" }}.NODE{{ "}}" }}-raw' "./.local/bin/chezmoi apply --force --exclude=encrypted"
         
         echo '✅ {{ "{{" }}.NODE{{ "}}" }} is fully provisioned!'
 {{- if stat (joinPath .chezmoi.homeDir ".global_uv") }}
@@ -136,15 +167,13 @@ tasks:
   {{- $any_up := index . "any_update" -}}
   {{- $osx_up := index . "osx_update" -}}
   {{- $chk := index . "check" -}}
-  {{- if and $is_osx $chk (lookPath $chk) (or $any_up $osx_up) }}
-      - banner "Updating {{ .name }}"
-      - task: update:{{ .name }}
-  {{- else if and $chk (lookPath $chk) $any_up }}
+  {{- if or (and $is_osx $chk (lookPath $chk) (or $any_up $osx_up)) (and $chk (lookPath $chk) $any_up) }}
       - banner "Updating {{ .name }}"
       - task: update:{{ .name }}
   {{- end }}
 {{- end }}
 {{- if stat (joinPath .chezmoi.homeDir ".global_uv") }}
+      - banner "global_uv"
       - task: update:global_uv
 {{- end }}
       - task: cleanup

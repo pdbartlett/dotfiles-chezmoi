@@ -17,7 +17,6 @@ if test -f "$HOME/.shell_basics"; then
 fi
 
 # --- Aliases / functions ---
-alias utd='task update:all'
 mkcd() {
     mkdir -p "$1" && cd "$1"
 }
@@ -34,6 +33,7 @@ sh_resource() {
 tm() {
     tmux new-session -A -s main
 }
+alias xtm='exec tm'
 
 # --- Optional settings ---
 {{ $brewExe := findExecutable "brew" (list "/opt/homebrew/bin" (joinPath .chezmoi.homeDir "homebrew/bin")) }}
@@ -93,6 +93,9 @@ tlu() {
     sudo -v
     sudo "${TLM}" update --self --all
 }
+{{- end }}
+{{ if lookPath "task" -}}
+alias utd='task update:all'
 {{- end }}
 {{ if lookPath "uv" -}}
 {{- $globalPath := joinPath .chezmoi.homeDir ".global_uv" -}}
