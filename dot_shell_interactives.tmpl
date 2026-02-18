@@ -90,12 +90,11 @@ tlu() {
     fi
     local TLM=$(which tlmgr)
     echo "🔐 Requesting sudo for MacTeX updates..."
-    sudo -v
     sudo "${TLM}" update --self --all
 }
 {{- end }}
 {{ if lookPath "task" -}}
-alias utd='task update:all'
+alias utd='sudo -v && task update:all'
 {{- end }}
 {{ if lookPath "uv" -}}
 {{- $globalPath := joinPath .chezmoi.homeDir ".global_uv" -}}
