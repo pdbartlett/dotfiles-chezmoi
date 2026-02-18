@@ -81,39 +81,21 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 {{- end }}
-{{ if lookPath "tlmgr" -}}
-# Tex (tlmgr)
-tlu() {
-    if ! command -v tlmgr &> /dev/null; then
-        echo "❌ tlmgr not found."
-        return 1
-    fi
-    local TLM=$(which tlmgr)
-    echo "🔐 Requesting sudo for MacTeX updates..."
-    sudo "${TLM}" update --self --all
-}
-{{- end }}
 {{ if lookPath "task" -}}
-alias utd='sudo -v && task update:all'
+utd() {
+    task update:all
+}
 {{- end }}
 {{ if lookPath "uv" -}}
 {{- $globalPath := joinPath .chezmoi.homeDir ".global_uv" -}}
 {{- if stat $globalPath -}}
 # uv
-## Core Execution
-alias gpy='uv run --project ~/.global_uv python'
-alias gipy='uv run --project ~/.global_uv ipython'
-alias gjup='uv run --project ~/.global_uv jupyter lab --ip=0.0.0.0'
-## Management (Add/Remove packages from anywhere)
-alias gadd='uv add --project ~/.global_uv'
-alias gpip='uv add --project ~/.global_uv'
-alias grm='uv remove --project ~/.global_uv'
-## Maintenance & Inspection
-alias gsync='uv sync --project ~/.global_uv'
-alias glock='uv lock --upgrade --project ~/.global_uv'
-alias gout='uv pip list --outdated --project ~/.global_uv'
-alias gtree='uv tree --project ~/.global_uv'
-## Navigation
-alias cdg='cd ~/.global_uv'
+export GUV="${HOME}/.global_uv"
+alias cdguv='cd "${GUV}"'
+guv() {
+    local cmd=$1
+    shift
+    uv $cmd --project="${GUV}" "$@"
+}
 {{- end -}}
 {{- end }}

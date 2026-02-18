@@ -28,12 +28,10 @@ apps:
   - { name: obsidian, group: optional, check_app: Obsidian.app, osx_install: brew install --cask obsidian }
   - { name: pandoc, group: optional, check: pandoc, osx_install: brew install pandoc }
   - { name: quarto, group: optional, check_app: quarto, osx_install: brew install --cask quarto }
-  - { name: r, group: optional, check: R, osx_install: brew install r }
-  - { name: rustup, group: optional, check: rustup, any_install: "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y", any_update: "rustup self update && rustup update" }
+  - { name: r, group: optional, check: R, osx_install: brew install r, any_update: R -q -e 'update.packages(ask=F)' }
   - { name: sccache, group: optional, check: sccache, osx_install: brew install sccache }
   - { name: texshop, group: optional, check_app: TeXShop.app, osx_install: brew install --cask texshop }
   - { name: texstudio, group: optional, check_app: texstudio.app, osx_install: brew install --cask texstudio }
-  - { name: uv, group: optional, check: uv, any_install: "curl -LsSf https://astral.sh/uv/install.sh | sh", any_update: "uv self update" }
   - { name: visual-studio-code, group: optional, check_app: "Visual Studio Code.app", osx_install: brew install --cask visual-studio-code }
 
   # --- Fonts (Group: fonts) ---
@@ -51,7 +49,7 @@ apps:
   - { name: reddit-mono, group: fonts, osx_install: "brew install --cask font-reddit-mono" }
   - { name: symbols-nerd, group: fonts, osx_install: "brew install --cask font-symbols-only-nerd-font" }
 
-  # Special treatment
+  # Special treatment / long commands
   - name: nvm
     group: common
     check: nvm-marker
@@ -60,6 +58,19 @@ apps:
       mkdir -p ~/.local/bin
       touch ~/.local/bin/nvm-marker
       chmod +x ~/.local/bin/nvm-marker
+    any_update: |
+      npm outdated -g || true
+      npm update -g || true
+  - name: rustup
+    group: optional
+    check: rustup
+    any_install: |
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      cargo install cargo-update
+    any_update: |
+      rustup self update
+      rustup update
+      cargo install-update -a
   - name: tex_live_utility
     group: optional
     check: tlmgr
@@ -67,6 +78,11 @@ apps:
     osx_update: |
       TLM=$(which tlmgr)
       echo "🔐 Requesting sudo for MacTeX updates..."
-      sudo -v
       sudo "${TLM}" update --self --all
-
+  - name: uv
+    group: optional
+    check: uv
+    any_install: |
+      curl -LsSf https://astral.sh/uv/install.sh | sh
+    any_update: |
+       uv self update

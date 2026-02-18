@@ -74,6 +74,7 @@ tasks:
           exit 0
         fi
         cd ~/.global_uv
+        if command -v gcert &> /dev/null; then gcert; fi
         uv lock --upgrade
         uv sync
 {{- else }}
