@@ -74,9 +74,14 @@ tasks:
           exit 0
         fi
         cd ~/.global_uv
-        if command -v gcert &> /dev/null; then gcert; fi
-        uv lock --upgrade
-        uv sync
+        if command -v gcert &> /dev/null; then
+          gcert
+          gpkg uv lock --upgrade
+          gpkg uv sync
+        else
+          uv lock --upgrade
+          uv sync
+        fi
 {{- else }}
   create:global_uv:
     desc: "Create the global UV science environment"
