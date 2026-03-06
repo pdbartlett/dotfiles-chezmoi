@@ -78,7 +78,8 @@ apps:
     osx_update: |
       TLM=$(which tlmgr)
       echo "🔐 Requesting sudo for MacTeX updates..."
-      sudo "${TLM}" update --self --all
+      sudo "${TLM}" update --self
+      sudo "${TLM}" update --all
   - name: uv
     group: optional
     check: uv
