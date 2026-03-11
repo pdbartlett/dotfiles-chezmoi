@@ -10,14 +10,14 @@ tasks:
     cmds:
       - |
         if [ -z '{{ "{{" }}.NODE{{ "}}" }}' ]; then
-          echo "❌ Error: Specify a node. Example: task provision NODE=macmini"
+          echo "❌ Error: Specify a node. Example: task rpsh NODE=macmini"
           exit 1
         fi
 
         RAW_HOST='{{ "{{" }}.NODE{{ "}}" }}-raw'
         CONF_DIR=".config/chezmoi"
         
-        echo "Step 1: 🔑 Authorizing MBP key..."
+        echo "Step 1: 🔑 Authorizing SSH key..."
         ssh-copy-id -i ~/.ssh/id_ed25519.pub "${RAW_HOST}"
 
         echo "Step 2: 🛠 Installing chezmoi..."
@@ -45,13 +45,13 @@ tasks:
     cmds:
       - |
         if [ -z '{{ "{{" }}.NODE{{ "}}" }}' ]; then
-          echo "❌ Error: Specify a node. Example: task provision NODE=oci-free"
+          echo "❌ Error: Specify a node. Example: task rpso NODE=oci-free"
           exit 1
         fi
 
         RAW_HOST='{{ "{{" }}.NODE{{ "}}" }}-raw'
         
-        echo "Step 1: 🔑 Authorizing MBP key..."
+        echo "Step 1: 🔑 Authorizing SSH key..."
         ssh-copy-id -i ~/.ssh/id_ed25519.pub "${RAW_HOST}"
 
         echo "Step 2: 🛠 Installing chezmoi..."
