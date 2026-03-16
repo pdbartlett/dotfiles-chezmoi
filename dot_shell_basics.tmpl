@@ -51,6 +51,11 @@ alias la='ls -A'
 alias l='ls -CF'
 alias grep='grep --color=auto'
 alias tree="tree -C" # Enable colors for tree command
+function ub() {
+  local cmd="$1"
+  shift
+  [ -n "${cmd}" ] && "/usr/bin/${cmd}" "$@"
+}
 
 # Ensure PATH is exported after all modifications
 export PATH
