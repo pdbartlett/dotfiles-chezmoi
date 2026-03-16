@@ -45,11 +45,13 @@ export PATH="{{ $brewDir }}:$PATH"
 export HOMEBREW_AUTO_UPDATE_SECS=14400
 export HOMEBREW_CLEANUP_MAX_AGE_DAYS=28
 export HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS=7
-export HOMEBREW_FORBIDDEN_LICENSES="AGPL-1.0-or-later OSL-1.0+ SSPL-1.0+ CAL-1.0 CPAL-1.0+ CPOL-1.02 EUPL-1.0+ SISSL SISSL-1.2+ Watcom-1.0+ CC-BY-NC-1.0+ CC-BY-NC-ND-1.0+ CC-BY-NC-SA-1.0+"
 export HOMEBREW_FORCE_BREWED_CURL=1
 export HOMEBREW_FORCE_BREWED_GIT=1
 export HOMEBREW_NO_INSECURE_REDIRECT=1
 export HOMEBREW_UPGRADE_GREEDY=1
+if command -v gcert &> /dev/null; then
+  export HOMEBREW_FORBIDDEN_LICENSES="AGPL-1.0-or-later OSL-1.0+ SSPL-1.0+ CAL-1.0 CPAL-1.0+ CPOL-1.02 EUPL-1.0+ SISSL SISSL-1.2+ Watcom-1.0+ CC-BY-NC-1.0+ CC-BY-NC-ND-1.0+ CC-BY-NC-SA-1.0+"
+fi
 {{- end }}
 {{ if stat (joinPath .chezmoi.homeDir ".cargo" "env") }}
 # cargo / rustup
