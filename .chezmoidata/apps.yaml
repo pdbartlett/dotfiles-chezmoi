@@ -28,7 +28,6 @@ apps:
   - { name: obsidian, group: optional, check_app: Obsidian.app, osx_install: brew install --cask obsidian }
   - { name: pandoc, group: optional, check: pandoc, osx_install: brew install pandoc }
   - { name: quarto, group: optional, check_app: quarto, osx_install: brew install --cask quarto }
-  - { name: r, group: optional, check: R, osx_install: brew install r, any_update: R -q -e 'update.packages(ask=F)' }
   - { name: sccache, group: optional, check: sccache, osx_install: brew install sccache }
   - { name: texshop, group: optional, check_app: TeXShop.app, osx_install: brew install --cask texshop }
   - { name: texstudio, group: optional, check_app: texstudio.app, osx_install: brew install --cask texstudio }
@@ -61,6 +60,11 @@ apps:
     any_update: |
       npm outdated -g || true
       npm update -g || true
+  - name: r
+    group: optional
+    check: R
+    osx_install: brew install r
+    any_update: R -q -e 'update.packages(ask=F, repos="https://cran.ma.imperial.ac.uk/")'
   - name: rustup
     group: optional
     check: rustup
